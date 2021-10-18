@@ -1,0 +1,57 @@
+\section{Median Trick}
+So far, we have an algorithm $A$ which estimates in correct range of $\eps$ with probability $\ge 0.9$. Our new algorithm $A^{\ast}$ will output in range of $\eps$ with probability $1-\delta$.
+Algorithm:
+\begin{itemize}
+\item Repeat $A$ for $m=O(log (1/\delta))$ times
+\item Take median of all the $m$ answers.
+\end{itemize}
+
+To prove the correctness, we'll use Chernoff/Hoeffding bounds.
+
+\begin{definition}
+[Chernoff/Hoeffding Bound]
+Let $X_{1}$, $X_{2}$, $\ldots$, $X_{m}$ be independent random variables $\in \{0,1\}$,
+$\mu = E[\Sigma_{i} X_{i}], \eps \in [0,1]$.
+Then $Pr[|\Sigma_{i} X_{i}-\mu| > \eps\mu] \leq 2e^{-\eps^{2}\mu/3}$
+\end{definition}
+
+Define $X_{i} = 1$ iff the $i^{th}$ answer of $A$ is correct (i.e. estimated value of $A$ lies in correct range).
+
+\begin{claim}
+$E[X_{i}] = 0.9$, and $E[\mu] = 0.9m$
+\end{claim}
+
+\begin{proof}
+Since A is correct with probability 0.9, $E[X_{i}] = 0.9$. And $E[\mu] = 0.9m$ due to linearity of expectation.
+\end{proof}
+
+\begin{claim}
+New algorithm $A^{\ast}$ is correct when $\Sigma_{i} X_{i} > 0.5m$
+\end{claim}
+
+\begin{proof}
+Since we are considering median value to be our answer, if more than half the trials of A are correct, algorithm $A^{\ast}$ is also correct.
+\end{proof}
+
+\begin{claim}
+To prove, $Pr[\Sigma_{i} X_{i} \ge 0.5m] \ge 1-\delta$ or $Pr[\Sigma_{i} X_{i} < 0.5m] < \delta$
+\end{claim}
+
+\begin{proof}
+\begin{equation}
+\begin{split}
+Pr[\Sigma_{i} X_{i} < 0.5m] & = Pr[\Sigma_{i} X_{i} - 0.9m < -0.4m]\\
+& \le Pr[|\Sigma_{i} X_{i} - \mu| > 0.4m]\\
+& = Pr[|\Sigma X_{i} - \mu| > 0.4/0.9 \mu]
+\end{split}
+\end{equation}
+Using Chernoff bound,
+\begin{equation}
+\begin{split}
+& \leq e^{-c*0.9m}\\
+& < \delta
+\end{split}
+\end{equation}
+Above equation holds for $m = O(log(1/\delta))$
+\end{proof}
+
