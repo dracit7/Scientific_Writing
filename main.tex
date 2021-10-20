@@ -1,16 +1,20 @@
 \documentclass[11pt]{article}
 \usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage{hyperref}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{epsfig}
 \usepackage[right=0.8in, top=1in, bottom=1.2in, left=0.8in]{geometry}
 \usepackage{setspace}
 \spacing{1.06}
 
+\graphicspath{{fig/}}
+
 \input{cmds.tex}
 
 \begin{document}
 
-\lecture{ - Cache Maintainance}{November 11, 2021}{Instructor:\hspace{0.08cm}\emph{Guoqiang Li}}{\emph{Hanze Zhang, Tianmai Deng}}
+\lecture{ - Cache Maintenance}{November 11, 2021}{Instructor:\hspace{0.08cm}\emph{Guoqiang Li}}{\emph{Hanze Zhang}}
 
 \input{intro.tex}
 \input{problem.tex}
@@ -19,5 +23,8 @@
 \input{properties.tex}
 \input{case.tex}
 \input{conclusion.tex}
+
+\bibliographystyle{abbrv}
+\bibliography{bib/dblp}
 
 \end{document}

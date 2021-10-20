@@ -1,57 +1,47 @@
-\section{Median Trick}
-So far, we have an algorithm $A$ which estimates in correct range of $\eps$ with probability $\ge 0.9$. Our new algorithm $A^{\ast}$ will output in range of $\eps$ with probability $1-\delta$.
-Algorithm:
-\begin{itemize}
-\item Repeat $A$ for $m=O(log (1/\delta))$ times
-\item Take median of all the $m$ answers.
-\end{itemize}
+\section{The Cache Coherency Problem}
 
-To prove the correctness, we'll use Chernoff/Hoeffding bounds.
+Modern processors cache is usually divided into multiple layers, namely L1, L2, and so on, to form a hierarchical system (See~\autoref{fig:hierarchy}).
+The upper-level cache L1, sometimes L2 too, is typically implemented inside of each processor core, while lower-level caches are shared among cores.
+While effectively reducing the bus traffic~\cite{archibald:ccpeuams,owicki:etposcc}, such design incurs the risk of cache inconsistency, which means two cores reading from the same memory address may receive different cached values.
+Such a cache coherency problem, if not properly handled, can be a great threat to the system's correctness.
 
-\begin{definition}
-[Chernoff/Hoeffding Bound]
-Let $X_{1}$, $X_{2}$, $\ldots$, $X_{m}$ be independent random variables $\in \{0,1\}$,
-$\mu = E[\Sigma_{i} X_{i}], \eps \in [0,1]$.
-Then $Pr[|\Sigma_{i} X_{i}-\mu| > \eps\mu] \leq 2e^{-\eps^{2}\mu/3}$
-\end{definition}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.50\textwidth]{cache.pdf}
+    \caption{A typical cache hierarchy diagram.}
+    \label{fig:hierarchy}
+\end{figure}
 
-Define $X_{i} = 1$ iff the $i^{th}$ answer of $A$ is correct (i.e. estimated value of $A$ lies in correct range).
+\subsection{Problem description}
 
-\begin{claim}
-$E[X_{i}] = 0.9$, and $E[\mu] = 0.9m$
-\end{claim}
+In multicore systems, it is common for multiple separate cores to operate on the same memory unit.
+Because of local cache's existance, each core maintains a copy of that memory unit, in form of a \emph{cache block}, in their own cache.
+If one of these cores updates its cache block's value by writing to the corresponding memory address, an inconsistency among memory unit copies arises.
+Without further synchronization operations, other cores will get outdated and incorrect values when they read from that memory address, causing a cache coherency problem.
+This problem exists in both write-through and write-back caches.
 
-\begin{proof}
-Since A is correct with probability 0.9, $E[X_{i}] = 0.9$. And $E[\mu] = 0.9m$ due to linearity of expectation.
-\end{proof}
+\subsection{Categories of Solutions}
 
-\begin{claim}
-New algorithm $A^{\ast}$ is correct when $\Sigma_{i} X_{i} > 0.5m$
-\end{claim}
+The cache coherency problem can be addressed by coordinating per-processor caches' read and write operations.
+For instance, when a processor $P_0$ updates a cached memory location $M$'s value from $V_0$ to $V_1$ without informing others, if another processor $P_1$ has cached the same location before, there will be an inconsistent state:
+when reading from $M$ after this update, $P_0$ gets the correct value $V_1$, but $P_1$ gets the outdated value $V_0$.
+However, if $P_0$ informs $P_1$ to invalidate the cacheline containing $M$ and write-through $V_1$ to the memory, $P_1$'s read will trigger a cache miss, making it load the correct value $V_1$ from memory.
+The aggregation of such coordination and rules are called \emph{cache coherency protocols}, which can be roughly categorized into three classes:
+snooping, directory-based, and software approaches.
 
-\begin{proof}
-Since we are considering median value to be our answer, if more than half the trials of A are correct, algorithm $A^{\ast}$ is also correct.
-\end{proof}
+Snooping or snoopy coherency protocols~\cite{tang:csdittcms,goodman:ucmtrpt,katz:iaccp,em:dragon,thacker:firefly} are the most popular protocols in bus-sharing multiprocessor systems.
+In these approaches, each local cache has a \emph{snoopy cache controller} which monitors transactions between the memory and other caches and updates the cache state accordingly~\cite{owicki:etposcc}.
+Such techniques leverage system bus attributes (e.g., transaction atomicity) to ensure the simplicity of their designation.
+While being efficient in common SMP systems, they face scalability issues when the bus bandwidth is not sufficient for serving transactions produced by numerous processors.
 
-\begin{claim}
-To prove, $Pr[\Sigma_{i} X_{i} \ge 0.5m] \ge 1-\delta$ or $Pr[\Sigma_{i} X_{i} < 0.5m] < \delta$
-\end{claim}
+Directory-based protocols~\cite{agarwal:aeodsfcc,tang:csdittcms,patel:aomwpcm} use a directory to keep track of all cache blocks' status, including the block state and the set of processors that are sharing the block.
+Compared with snooping approaches, directory-based protocols allow more fine-grained transaction monitoring instead of broadcasting each transaction to all processors connected to the bus.
+These protocols achieve better scalability by reducing the bus traffic, but inevitably incur extra overhead for ensuring the atomicity and ordering of transaction signals.
 
-\begin{proof}
-\begin{equation}
-\begin{split}
-Pr[\Sigma_{i} X_{i} < 0.5m] & = Pr[\Sigma_{i} X_{i} - 0.9m < -0.4m]\\
-& \le Pr[|\Sigma_{i} X_{i} - \mu| > 0.4m]\\
-& = Pr[|\Sigma X_{i} - \mu| > 0.4/0.9 \mu]
-\end{split}
-\end{equation}
-Using Chernoff bound,
-\begin{equation}
-\begin{split}
-& \leq e^{-c*0.9m}\\
-& < \delta
-\end{split}
-\end{equation}
-Above equation holds for $m = O(log(1/\delta))$
-\end{proof}
+Software-based protocols~\cite{smith:cccwssauoti,cytron:amopc} trade software complexity for hardware complexity.
+They are highly extensible and configurable, requiring minimal hardware support.
+Nevertheless, software-based protocols feel hard to achieve comparable performance to hardware-based competitors~\cite{owicki:etposcc}.
 
+This notes focuses on snoopy coherency protocols, as they are the most widely used solutions.
+Directory-based techniques are mainly applied in NUMA systems or large-scale multiprocessor systems because of their ideal scalability;
+software-based approaches appear more often in special scenarios with limited hardware support or irregular requirements.

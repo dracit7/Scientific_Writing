@@ -3,4 +3,7 @@
 *.fls
 *.log
 *.pdf
+*.out
+*.blg
+*.bbl
 *.synctex.gz
