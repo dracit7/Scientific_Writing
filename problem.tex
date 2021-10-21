@@ -1,4 +1,4 @@
-\section{The Cache Coherency Problem}
+\section{The Cache Coherency Problem}\label{sec:problem}
 
 Modern processors cache is usually divided into multiple layers, namely L1, L2, and so on, to form a hierarchical system (See~\autoref{fig:hierarchy}).
 The upper-level cache L1, sometimes L2 too, is typically implemented inside of each processor core, while lower-level caches are shared among cores.
@@ -26,22 +26,18 @@ The cache coherency problem can be addressed by coordinating per-processor cache
 For instance, when a processor $P_0$ updates a cached memory location $M$'s value from $V_0$ to $V_1$ without informing others, if another processor $P_1$ has cached the same location before, there will be an inconsistent state:
 when reading from $M$ after this update, $P_0$ gets the correct value $V_1$, but $P_1$ gets the outdated value $V_0$.
 However, if $P_0$ informs $P_1$ to invalidate the cacheline containing $M$ and write-through $V_1$ to the memory, $P_1$'s read will trigger a cache miss, making it load the correct value $V_1$ from memory.
-The aggregation of such coordination and rules are called \emph{cache coherency protocols}, which can be roughly categorized into three classes:
+The aggregation of such coordination and rules are called \emph{cache coherency protocols}, whose implementation can be roughly categorized into three classes:
 snooping, directory-based, and software approaches.
 
-Snooping or snoopy coherency protocols~\cite{tang:csdittcms,goodman:ucmtrpt,katz:iaccp,em:dragon,thacker:firefly} are the most popular protocols in bus-sharing multiprocessor systems.
+Snooping or snoopy coherency techniques~\cite{tang:csdittcms,goodman:ucmtrpt,katz:iaccp,em:dragon,thacker:firefly} are the most popular implementation in bus-sharing multiprocessor systems.
 In these approaches, each local cache has a \emph{snoopy cache controller} which monitors transactions between the memory and other caches and updates the cache state accordingly~\cite{owicki:etposcc}.
 Such techniques leverage system bus attributes (e.g., transaction atomicity) to ensure the simplicity of their designation.
 While being efficient in common SMP systems, they face scalability issues when the bus bandwidth is not sufficient for serving transactions produced by numerous processors.
 
-Directory-based protocols~\cite{agarwal:aeodsfcc,tang:csdittcms,patel:aomwpcm} use a directory to keep track of all cache blocks' status, including the block state and the set of processors that are sharing the block.
-Compared with snooping approaches, directory-based protocols allow more fine-grained transaction monitoring instead of broadcasting each transaction to all processors connected to the bus.
-These protocols achieve better scalability by reducing the bus traffic, but inevitably incur extra overhead for ensuring the atomicity and ordering of transaction signals.
+Directory-based techniques~\cite{agarwal:aeodsfcc,tang:csdittcms,patel:aomwpcm} use a directory to keep track of all cache blocks' status, including the block state and the set of processors that are sharing the block.
+Compared with snooping approaches, directory-based techniques allow more fine-grained transaction monitoring instead of broadcasting each transaction to all processors connected to the bus.
+These approaches achieve better scalability by reducing the bus traffic, but inevitably incur extra overhead for ensuring the atomicity and ordering of transaction signals.
 
-Software-based protocols~\cite{smith:cccwssauoti,cytron:amopc} trade software complexity for hardware complexity.
+Software-based techniques~\cite{smith:cccwssauoti,cytron:amopc} trade software complexity for hardware complexity.
 They are highly extensible and configurable, requiring minimal hardware support.
-Nevertheless, software-based protocols feel hard to achieve comparable performance to hardware-based competitors~\cite{owicki:etposcc}.
-
-This notes focuses on snoopy coherency protocols, as they are the most widely used solutions.
-Directory-based techniques are mainly applied in NUMA systems or large-scale multiprocessor systems because of their ideal scalability;
-software-based approaches appear more often in special scenarios with limited hardware support or irregular requirements.
+Nevertheless, software-based solutions feel hard to achieve comparable performance to hardware-based competitors~\cite{owicki:etposcc}.

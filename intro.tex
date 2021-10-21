@@ -1,4 +1,4 @@
-\section{Introduction}
+\section{Introduction}\label{sec:intro}
 
 Cache, as an important component in software or hardware systems, aims to store temporary data for accelerating further requests.
 Being widely applied in varied computer systems, cache typically provides lower latency and higher throughput, benefitting the systems' overall performance.
@@ -11,4 +11,5 @@ Moreover, unprotected cache can be leveraged to launch powerful side-channel att
 To make full use of cache while avoiding performance and security implications, researchers have proposed numerous cache maintenance techniques in the last decades.
 
 Considering cache maintenance algorithms' complexity, variaty, and quantity, we focus on algorithms to maintain cache coherency in this notes.
-Specifically, we elaborate on snoopy (or snooping) techniques~\cite{tang:csdittcms,goodman:ucmtrpt,katz:iaccp,em:dragon,thacker:firefly}, the most commonly used for maintaining processor cache coherency, as an example to illustrate how cache maintenance algorithms are designed.
+Specifically, we elaborate on snoopy (or snooping) techniques~\cite{tang:csdittcms,goodman:ucmtrpt,katz:iaccp,em:dragon,thacker:firefly}, the most commonly used for maintaining processor cache coherency, as an example to illustrate how cache maintenance algorithms are designed (\autoref{sec:algo}).
+We also talk about directory-based techniques that are applied in large-scale real-world systems because of their great scalability (\autoref{sec:practical}).

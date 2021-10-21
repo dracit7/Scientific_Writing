@@ -1,5 +1,53 @@
-\section{Snooping Algorithms}
+\section{Cache Coherency Algorithms}\label{sec:algo}
 
-Each snooping protocol has two components:
-(a) a specification of possile local cacheline \emph{states} and (b) the definition of \emph{actions} to be taken when specific operations 
+Cache coherency algorithms are described in form of \emph{protocols}.
 
+\begin{definition}[Cache Coherency Protocol]
+  Each cache coherency protocol is the combination of a state set $S$ and an action set $A$, where:
+  \begin{itemize}
+    \item $S = \{s | s \in \text{all possile cache block states}\}$
+    \item $A = \{(s, t)\rightarrow a | s \in S, t \in \text{all possible transaction types}\}$
+  \end{itemize}
+\end{definition}
+
+Based on Definition 1, each cache coherency protocol can be represented by a \emph{non-deterministic finite automaton} (NFA), in which form we introduce several classic algorithms as follow.
+We start with the simplist protocol MSI (\autoref{sec:algo:msi}), then introduce two of its most popular improved versions MESI (\autoref{sec:algo:mesi}) and MOESI (\autoref{sec:algo:moesi}).
+
+\subsection{MSI Protocol}\label{sec:algo:msi}
+
+MSI protocol (a.k.a. synapse protocol) was firstly used in the fault-tolerant transaction processing multiprocessor Synapse N+1~\cite{frank:synapse}.
+Its key idea is invalidating a cache block in other caches when its value is updated in one cache, so that other cores will not get the wrong data from their local caches.
+It defines 3 states for each cache block $B$:
+\begin{itemize}
+  \item M (Modified): $B$'s content is modified in only one cache and not updated in the memory yet.
+  \item S (Shared): $B$'s content is potentially shared with other caches.
+  \item I (Invalid): $B$ is an invalid cache block, reads or writes will trigger cache misses.
+\end{itemize}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{.49\textwidth}
+      \centering
+      \includegraphics[width=1.\textwidth]{synapse.pdf}
+      \caption{MSI}
+      \hspace{10pt}
+    \end{subfigure}
+    \begin{subfigure}{.49\textwidth}
+      \centering
+      \includegraphics[width=1.\textwidth]{MESI.pdf}
+      \caption{MESI}
+      \hspace{10pt}
+    \end{subfigure}
+    \begin{subfigure}{.65\textwidth}
+      \centering
+      \includegraphics[width=1.\textwidth]{MOESI.pdf}
+      \caption{MOESI}
+      \hspace{10pt}
+    \end{subfigure}
+    \caption{The NFA of each cache coherency protocol.}
+    \label{fig:protocols}
+\end{figure}
+
+\subsection{MESI Protocol}\label{sec:algo:mesi}
+
+\subsection{MOESI Protocol}\label{sec:algo:moesi}
