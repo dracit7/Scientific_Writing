@@ -17,12 +17,27 @@ We start with the simplist protocol MSI (\autoref{sec:algo:msi}), then introduce
 
 MSI protocol (a.k.a. synapse protocol) was firstly used in the fault-tolerant transaction processing multiprocessor Synapse N+1~\cite{frank:synapse}.
 Its key idea is invalidating a cache block in other caches when its value is updated in one cache, so that other cores will not get the wrong data from their local caches.
-It defines 3 states for each cache block $B$:
+The name MSI comes from the 3 states it defines for each cache block $B$:
 \begin{itemize}
   \item M (Modified): $B$'s content is modified in only one cache and not updated in the memory yet.
   \item S (Shared): $B$'s content is potentially shared with other caches.
   \item I (Invalid): $B$ is an invalid cache block, reads or writes will trigger cache misses.
 \end{itemize}
+
+Traditional cache blocks only have two states: valid (V) and invalid (I).
+Accesses to a valid cache block are regarded as \emph{read hits} (RH) or \emph{write hits} (WH), while accesses to an invalid one denote \emph{read misses} (RM) or \emph{write misses} (WM).
+MSI protocol divides state V into M and S to indicate whether the cache block content is consistent among local caches.
+A cache block state transition into M means the break of local cache consistency, leading to the invalidation of the cache block in other local caches.
+
+\autoref{fig:msi} shows possible state transition occasions of MSI protocol in NFA.
+\emph{Bus read} (BR) or \emph{bus write} (BW) means that the cache controller monitors a read or write transaction to the same cache block in other processor caches.
+The action set of MSI protocol can be described as:
+
+\paragraph{The cache block's content is shared among caches ($s = S$)}
+When a write hit occurs ($t = WH$), the local cache block is modified, and the consistency is broken.
+Hence, the local cache state transits to \emph{Modified} ($s \rightarrow M$).
+All other caches then monitor a bus write and invalidate their corresponding cache block.
+When a read hit occurs ($t = RH$), no extra operation is required ($a = \epsilon$).
 
 \begin{figure}
     \centering
@@ -30,24 +45,64 @@ It defines 3 states for each cache block $B$:
       \centering
       \includegraphics[width=1.\textwidth]{synapse.pdf}
       \caption{MSI}
+      \vspace{-53pt}
       \hspace{10pt}
+      \label{fig:msi}
     \end{subfigure}
     \begin{subfigure}{.49\textwidth}
       \centering
       \includegraphics[width=1.\textwidth]{MESI.pdf}
       \caption{MESI}
       \hspace{10pt}
+      \label{fig:mesi}
     \end{subfigure}
     \begin{subfigure}{.65\textwidth}
       \centering
       \includegraphics[width=1.\textwidth]{MOESI.pdf}
       \caption{MOESI}
       \hspace{10pt}
+      \label{fig:moesi}
     \end{subfigure}
     \caption{The NFA of each cache coherency protocol.}
-    \label{fig:protocols}
 \end{figure}
+
+\paragraph{The cache block's content is modified ($s = M$)}
+A modified state in MSI protocol denotes the exclusive ownership to the cache block, so neither read hits nor write hits require extra operation.
+When a cache block in state M is invalidated, its content is stored into the main memory in advance.
+
+\paragraph{The cache block is invalid ($s = I$)}
+When a write miss occurs ($t = WM$), the cache block content is loaded from the main memory, and the cache block state transits to M ($s \rightarrow M$).
+Write misses are also regarded as bus writes, making other caches to be invalidated.
+
+When a read miss occurs ($t = RM$), things are much more complicated.
+The cache controller first examines whether the cache block has \emph{Modified} copies in another cache.
+If so, it informs the corresponding cache to write the modified value into the main memory and transits the state to S;
+then it loads the updated memory value to the local cache.
+Otherwise, it directly loads the value from the main memory.
+In the end, the local cache block state is transitted to S ($s \rightarrow S$).
+
+MSI protocol successfully ensures the coherency among local caches.
+However, each time a cache block transits from state S to state M, cache blocks in other processor caches must be invalidated, incurring a significant number of extra cache misses.
+In most cases, data loaded by a read miss is not intended to be shared with other caches, while MSI protocol regards all loaded data as shared.
+To eliminate unnecessary cache invalidations brought by shared cache block modifications, MESI protocol is proposed.
 
 \subsection{MESI Protocol}\label{sec:algo:mesi}
 
+As its name indicates, MESI protocol adds an E (Exclusive) state to MSI protocol
+ (See~\autoref{fig:mesi}).
+When the cache controller loads a cache block's content from the main memory, it firstly examines whether other caches are holding shared copies of this cache block.
+If there is no existing copies, the cache block state is updated to E instead of S.
+Modifying an \emph{Exclusive} cache block transits its state to M without invalidating other caches.
+An \emph{Exclusive} cache block is turned in to a \emph{Shared} one only when its value is loaded by another processor cache.
+
+In MESI protocol, most cache blocks can be loaded exclusively, so that modifying them does not affect other caches.
+Nevertheless, it does not mitigate the overhead brought by sharing a modified cache block:
+when the cache controller tries to load a cache block that has modified copies in other processor caches, it has to wait until the modified value is stored into the main memory.
+MOESI protocol emerges to further reduce the cache coherency overhead.
+
 \subsection{MOESI Protocol}\label{sec:algo:moesi}
+
+By adding an O (Owned) state, MOESI protocol allows the dirty data to be shared among processor caches without being written to the main memory.
+If a read miss occurs when a modified copy exists in other caches, the modified copy will not be written back to memory instantly;
+instead, the cache controller will straightly copy it to the cache that triggers the read miss and transits its state to O.
+Dirty data in an \emph{Owned} cache block is only written to the main memory when there is a write operation.
