@@ -27,9 +27,9 @@ The name MSI comes from the 3 states it defines for each cache block $B$:
 Traditional cache blocks only have two states: valid (V) and invalid (I).
 Accesses to a valid cache block are regarded as \emph{read hits} (RH) or \emph{write hits} (WH), while accesses to an invalid one denote \emph{read misses} (RM) or \emph{write misses} (WM).
 MSI protocol divides state V into M and S to indicate whether the cache block content is consistent among local caches.
-A cache block state transition into M means the break of local cache consistency, leading to the invalidation of the cache block in other local caches.
+A cache block state transition into M indicates the break of local cache consistency, leading to the invalidation of the cache block in other processor caches.
 
-\autoref{fig:msi} shows possible state transition occasions of MSI protocol in NFA.
+\autoref{fig:msi} shows possible state transition occasions of MSI protocol.
 \emph{Bus read} (BR) or \emph{bus write} (BW) means that the cache controller monitors a read or write transaction to the same cache block in other processor caches.
 The action set of MSI protocol can be described as:
 
@@ -43,7 +43,7 @@ When a read hit occurs ($t = RH$), no extra operation is required ($a = \epsilon
     \centering
     \begin{subfigure}{.49\textwidth}
       \centering
-      \includegraphics[width=1.\textwidth]{synapse.pdf}
+      % \includegraphics[width=1.\textwidth]{synapse.pdf}
       \caption{MSI}
       \vspace{-53pt}
       \hspace{10pt}
@@ -51,14 +51,14 @@ When a read hit occurs ($t = RH$), no extra operation is required ($a = \epsilon
     \end{subfigure}
     \begin{subfigure}{.49\textwidth}
       \centering
-      \includegraphics[width=1.\textwidth]{MESI.pdf}
+      % \includegraphics[width=1.\textwidth]{MESI.pdf}
       \caption{MESI}
       \hspace{10pt}
       \label{fig:mesi}
     \end{subfigure}
     \begin{subfigure}{.65\textwidth}
       \centering
-      \includegraphics[width=1.\textwidth]{MOESI.pdf}
+      % \includegraphics[width=1.\textwidth]{MOESI.pdf}
       \caption{MOESI}
       \hspace{10pt}
       \label{fig:moesi}
@@ -68,21 +68,20 @@ When a read hit occurs ($t = RH$), no extra operation is required ($a = \epsilon
 
 \paragraph{The cache block's content is modified ($s = M$)}
 A modified state in MSI protocol denotes the exclusive ownership to the cache block, so neither read hits nor write hits require extra operation.
-When a cache block in state M is invalidated, its content is stored into the main memory in advance.
+When a cache block in \emph{Modified} state is invalidated, its content is stored into the main memory in advance.
 
 \paragraph{The cache block is invalid ($s = I$)}
-When a write miss occurs ($t = WM$), the cache block content is loaded from the main memory, and the cache block state transits to M ($s \rightarrow M$).
-Write misses are also regarded as bus writes, making other caches to be invalidated.
+When a write miss occurs ($t = WM$), other caches monitor a bus write and invalidate their corresponding cache block.
+Afterwards, the cache block content is loaded from the main memory, and the cache block state transits to \emph{Modified} ($s \rightarrow M$).
 
-When a read miss occurs ($t = RM$), things are much more complicated.
-The cache controller first examines whether the cache block has \emph{Modified} copies in another cache.
-If so, it informs the corresponding cache to write the modified value into the main memory and transits the state to S;
-then it loads the updated memory value to the local cache.
+When a read miss occurs ($t = RM$), the cache controller first examines whether the cache block has \emph{Modified} copies in another cache.
+If so, it informs the corresponding cache to write the dirty value into the main memory and transits the state to \emph{Shared};
+then it loads the updated value to the local cache.
 Otherwise, it directly loads the value from the main memory.
-In the end, the local cache block state is transitted to S ($s \rightarrow S$).
+In the end, the local cache block state is marked as \emph{Shared} ($s \rightarrow S$).
 
 MSI protocol successfully ensures the coherency among local caches.
-However, each time a cache block transits from state S to state M, cache blocks in other processor caches must be invalidated, incurring a significant number of extra cache misses.
+However, each time a cache block transits from \emph{Shared} to \emph{Modified}, cache blocks in other processor caches must be invalidated, incurring a significant number of extra cache misses.
 In most cases, data loaded by a read miss is not intended to be shared with other caches, while MSI protocol regards all loaded data as shared.
 To eliminate unnecessary cache invalidations brought by shared cache block modifications, MESI protocol is proposed.
 
@@ -91,8 +90,8 @@ To eliminate unnecessary cache invalidations brought by shared cache block modif
 As its name indicates, MESI protocol adds an E (Exclusive) state to MSI protocol
  (See~\autoref{fig:mesi}).
 When the cache controller loads a cache block's content from the main memory, it firstly examines whether other caches are holding shared copies of this cache block.
-If there is no existing copies, the cache block state is updated to E instead of S.
-Modifying an \emph{Exclusive} cache block transits its state to M without invalidating other caches.
+If there is no existing copies, the cache block state is updated to \emph{Exclusive} instead of \emph{Shared}.
+Modifying an \emph{Exclusive} cache block transits its state to \emph{Modified} without invalidating other caches.
 An \emph{Exclusive} cache block is turned in to a \emph{Shared} one only when its value is loaded by another processor cache.
 
 In MESI protocol, most cache blocks can be loaded exclusively, so that modifying them does not affect other caches.
@@ -102,7 +101,8 @@ MOESI protocol emerges to further reduce the cache coherency overhead.
 
 \subsection{MOESI Protocol}\label{sec:algo:moesi}
 
-By adding an O (Owned) state, MOESI protocol allows the dirty data to be shared among processor caches without being written to the main memory.
+By adding an O (Owned) state, MOESI protocol allows the dirty data to be shared among processor caches without being written to the main memory (See~\autoref{fig:moesi}).
 If a read miss occurs when a modified copy exists in other caches, the modified copy will not be written back to memory instantly;
-instead, the cache controller will straightly copy it to the cache that triggers the read miss and transits its state to O.
+instead, the cache controller will straightly copy it to the cache that triggers the read miss and transits its state to \emph{Owned}.
 Dirty data in an \emph{Owned} cache block is only written to the main memory when there is a write operation.
+MOESI protocol defered the write of dirty cache blocks to the main memory to cut off unnecessary writes.
