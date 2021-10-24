@@ -1,0 +1,16 @@
+\section{Key Properties}
+
+Formally speaking, all cache coherency protocols have two key properties to ensure the consistency among processor caches:
+
+\begin{itemize}
+  \item \textbf{Write propagation}: changes to the cache block in any cache must be propagated to its copies in other processor caches.
+  \item \textbf{Transaction Serialization}: accesses to a single memory location must be seen by all processors in the same order.
+\end{itemize}
+
+Write propagation must be guaranteed by protocol design, but the specific approach is not delimited.
+In the three protocols introduced in~\autoref{sec:algo}, write propagation is supported by write-invalidate, which is invalidating other caches to force them reading changes from the main memory before any further transactions.
+However, there are more approaches to implement write propagation, like write-update, which is informing other caches about changes initiatively instead of waiting them to trigger read or write misses.
+
+Transaction serialization, different from write propagation, depends more on specific implementation instead of algorithmic design.
+Snooping techniques leverages the shared bus to pass messages among caches, which has inherent atomicity and ordering guarantee.
+In opposite, directory-based solutions have to rely on locking the directory to ensure transaction serialization, which restricts their performance in less-core scenarios.

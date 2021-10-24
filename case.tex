@@ -1,0 +1,31 @@
+\section{Case Study}
+
+This section presents concrete cases to illustrate the necessity of write propagation and transaction serialization to cache coherency.
+All cases share the same setup, which is a multiprocessor system consists of four processors, namely $P_1$ to $P_4$, operating on a shared variable $v$ with an initial value $V_0$. 
+The cache block containing $v$ in four processors are $B_1$ to $B_4$ respectively.
+
+\subsection{Case 1: Erroneous Read}
+
+Suppose there is no write propagation mechanism among processors.
+If all transactions are read operations, the system runs normally as each processor reads $v$'s copy from its local cache.
+However, assume that $P_1$ modifies the value of $v$ to $V_1$ at a time.
+Whether the cache policy is write-through ($V_1$ is written from $B_1$ to the main memory) or write-back ($V_1$ is only in $B_1$), other processors' read operations would be read hit and returns $V_0$ from their local caches, which is an erroneous value.
+
+With MSI or MESI protocols, things will be different.
+Once $P_1$ issues the writing of $V_1$, its state transits from \emph{Shared} to \emph{Modified}, then $P_2$ to $P_4$ monitor a bus write and invalidate $B_2$ to $B_4$.
+If $P_2$ wants to read $v$'s value in this occasion, there will be a read miss because $B_2$ has been invalidated.
+The cache controller instructs $B_1$ to write $V_1$ to the main memory, which is loaded then by $B_2$.
+Since the dirty value $V_1$ has been written back, both $B_1$ and $B_2$ transit their state to \emph{Shared}.
+$B_2$ eventually returns the correct value $V_1$ to $P_2$.
+In MOESI protocol, $V_1$ will be directly transmitted to $B_2$ without being written back to the main memory.
+$B_1$'s state will be \emph{Owned} in this occasion, which means it holds a shared dirty value that needs to be eventually written to the main memory.
+
+\subsection{Case 2: Incoherent View}
+
+Write propagation ensures that each processor can see modifications made by other processors;
+nevertheless, when there are multiple modifications issued by different processors, it does not guarantee the order of modifications, which can cause the incoherent view problem.
+
+Suppose that $P_1$ and $P_2$ updates the value of $v$ to $V_1$ and $V_2$ respectively at the same time.
+When $P_3$ and $P_4$ try to aquire $v$'s value, if the transaction is not serialized, it is possible that $P_3$ see the change made by $P_1$ after seeing the change made by $P_2$ and return $V_1$, while $P_4$ see $P_1$ first on the contrary and return $V_2$.
+In shared-bus protocols like MESI, the bus and the main memory act as a natural barrier which ensures that only one value can be read by all processors.
+However, in other protocols (e.g., those which transmit data from cache to cache), unserialized transaction can be a problem.
