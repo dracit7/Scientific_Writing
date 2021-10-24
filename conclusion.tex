@@ -1,12 +1,16 @@
-\section{Concluding Remarks}
+\section{Conclusion}
+
+In this notes, we illustrate causes and solutions of the cache coherency problem, one of the most representative problem in the cache maintenance area.
+This problem arises in multiprocessor systems because local cache writes can break the consistency among processor caches, causing erroneous and outdated data to be read.
+Existing solutions tend to use cache coherency protocols implemented by snooping or directory-based techniques to achieve write propagation and transaction serialization, ensuring the correctness of multiprocessor systems.
+
+Interestingly, as a problem extensively studied since 1980s, the cache coherency problem is still open.
+New architectures like manycores and distributed shared memory keep bringing new challenges to this area, seeking for innovative solutions.
+Future research interests in this area mainly concentrate on the following directions:
 
 \begin{itemize}
-
-\item We can use median trick and Chernoff bound to improve the probability of an existing algorithm.
-
-\item For distinct elements problem, we can also store the hashes $h(i)$ approximately. One example is to store the number of leading zeros, and it only cost $O(\log \log n)$ bits per hash value, and that is the idea behind another algorithm called HyperLogLog.
-
-\item For the impossibility results, we can also prove that randomized exact algorithm won't work.
-
+  \item Design or utilize new hardware to implement more efficient cache coherency protocols in specific scenarios (e.g., read-time systems~\cite{kaushik:asatatwclahpupcc,wu:ahpfepccpfrtm}, distributed shared memory~\cite{franques:widir}).
+  \item Cache coherency schemes on disaggregated architectures like CPU-GPU~\cite{yudha:asccsficgs}, Multi-GPU~\cite{ren:hmg}.
+  \item Enforcing cache coherency protocols to defend possible cyber attacks~\cite{gupta:schfmccacda,kao:ghostwriter}.
 \end{itemize}
 
