@@ -9,13 +9,7 @@ In the beginning, cache coherency protocols are implemented with snoopy cache co
 On a 4-core processor for personal computers, monitoring all local caches is not a significant burden for a cache controller.
 However, if scaled up to a 64-core cluster, considering the limited bus bandwidth, broadcasting all transactions to each cache controller will cause severe congestion and incur nontrivial overhead.
 
-To improve the practicability of cache coherency algorithms, directory-based solutions have been proposed as the substitution of snooping techniques.
-Instead of utilizing the shared bus like snooping techniques do, directory-based techniques leverage a special \emph{directory} to maintain cache block metadata.
-Each cache block has its own directory entry, which contains a bitmap recording the distribution of the cache block's copies among processors (See~\autoref{fig:impl}).
-This way, cache controllers retrieve the information about which block have cache block copies by simply querying the directory rather than monitoring bus reads or bus writes.
-In such a model, data are transmitted only between caches that need to share them, saving significant bus bandwidth.
-
-\begin{figure}
+\begin{figure}[!ht]
     \centering
     \begin{subfigure}{.49\textwidth}
       \centering
@@ -33,3 +27,23 @@ In such a model, data are transmitted only between caches that need to share the
     \label{fig:impl}
 \end{figure}
 
+To improve the practicability of cache coherency algorithms, directory-based solutions have been proposed as the substitution of snooping techniques.
+Instead of utilizing the shared bus like snooping techniques do, directory-based techniques leverage a special \emph{directory} to maintain cache block metadata.
+Each cache block has its own tag-indexed directory entry, which contains a bitmap recording the ownership of the cache block's copies among processors (See~\autoref{fig:impl}).
+This way, cache controllers retrieve the information about which block have cache block copies by simply querying the directory rather than monitoring bus reads or bus writes.
+In such a model, data are transmitted only between caches that need to share them, saving significant bus bandwidth.
+
+For instance, consider an $n$-core cluster following MESI protocol, where core $i$'s cache is called $C_i$.
+In a snoopy scheme, when $C_i$ issues a read operation on cache block $B$, the cache controller broadcasts this information to the shared bus.
+Each other cache digest such a message, update its state based on the MESI NFA, and inform other caches whether it is holding a copy of $B$.
+$C_i$ can not decide which state it should transit to until either it receives a message saying that another cache is holding a copy of $B$ ($s\rightarrow S$) or it ensures that all other caches is not holding $B$'s copies ($s\rightarrow E$).
+Such a process requires at least one round-trip between caches, and costs exponential extra time when $n$ becomes bigger as frequent broadcasts clog the shared bus.
+
+However, with a directory-based implementation, $C_i$ does not need to broadcast the read anymore.
+Instead, it simply queries the directory to acquire $B$'s related bitmap, figuring out if there are other caches holding $B$'s copies.
+A clean bitmap indicates that $C_i$ is holding a copy of $B$ exclusively, otherwise it ought to share the cache block's value with other caches.
+This operation occupies minimal bus bandwidth because it only involves direct communication with the directory;
+moreover, no matter how big $n$ is, the bitmap cleanness can be checked in one directory access with an OR gate.
+
+Notably, although directory-based solutions outperform snoopy ones in large-scale systems, it requires extra effort to implement primitives that buses inherently provide, like transaction serialization.
+We will discuss more about this trade-off in~\autoref{sec:prop}.

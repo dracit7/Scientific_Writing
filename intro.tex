@@ -11,5 +11,6 @@ Moreover, unprotected cache can be leveraged to launch powerful side-channel att
 To make full use of cache while avoiding performance and security implications, researchers have proposed numerous cache maintenance techniques in the last decades.
 
 Considering cache maintenance algorithms' complexity, variaty, and quantity, we focus on algorithms to maintain cache coherency in this notes.
-Specifically, we elaborate on snoopy (or snooping) techniques~\cite{tang:csdittcms,goodman:ucmtrpt,katz:iaccp,em:dragon,thacker:firefly}, the most commonly used for maintaining processor cache coherency, as an example to illustrate how cache maintenance algorithms are designed (\autoref{sec:algo}).
-We also talk about directory-based techniques that are applied in large-scale real-world systems because of their great scalability (\autoref{sec:practical}).
+We start by introduce the cache coherency problem to motivate the designation of cache coherency protocols (\autoref{sec:problem}), then elaborate on the classic MSI protocol, as well as its improved variants, to illustrate how cache maintenance algorithms are designed (\autoref{sec:algo}).
+We also talk about cache coherency protocols' directory-based implementation that are applied in large-scale real-world systems because of their great scalability (\autoref{sec:practical}), key properties these protocols must guarantee (\autoref{sec:prop}), and case studies that emphasize cache coherency algorithms' importance in multiprocessor systems (\autoref{sec:case}).
+We end with a high-level conclusion that summarizes existing solutions of the cache coherency problem, open problems, and future research directions (\autoref{sec:conclusion}).
